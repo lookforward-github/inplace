@@ -9,6 +9,7 @@ scroller = new FTScroller(canvasWrapper, {
 	bouncing: false,
 	contentWidth: 1000,
 	contentHeight: 1000,
+	scrollBoundary: 10,
 	updateOnWindowResize: true
 });
 zoomCanvas(scale);
@@ -73,6 +74,12 @@ function getMousePosition(canvas, event) {
 
 canvas.addEventListener("click", function(e) {
     getMousePosition(canvas, e);
+});
+
+var hammertime = new Hammer(canvas);
+hammertime.get('pinch').set({ enable: true });
+hammertime.on('pinch', function(ev) {
+	console.log(ev);
 });
 
 loadData();
