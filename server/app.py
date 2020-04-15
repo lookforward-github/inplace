@@ -13,7 +13,7 @@ DATA_FILE = 'inplace.data'
 def regenerate():
     global DATA_RAW
     print('Data regenerating', end='')
-    start = time.time_ns()
+    start = time.time()
     DATA_RAW = bytearray()
     for i in range(DATA_SIZE):
         DATA_RAW.append(random.randrange(0, 256))
@@ -28,7 +28,7 @@ def regenerate():
     with open(DATA_FILE, 'wb') as f:
         f.write(DATA_RAW)
 
-    print('Data regenerated in %s ms' % ((time.time_ns() - start) / 1000000))
+    print('Data regenerated in %s s' % (time.time() - start))
 
     return True
 
