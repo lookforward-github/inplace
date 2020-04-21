@@ -79,8 +79,7 @@ canvas.addEventListener('click', function(event) {
 
     console.log("Coordinates:", x, y);
 
-    painter.style.display = 'block';
-    painterInput.value = rgbaToHex(ctx.getImageData(x, y, 1, 1).data);
+    painterPixelColor.value = rgbaToHex(ctx.getImageData(x, y, 1, 1).data);
 });
 
 function changeColor(hex) {
@@ -89,7 +88,6 @@ function changeColor(hex) {
 
 function paint() {
     fetch(`/paint/${p.x}/${p.y}/${p.rgba[0]}/${p.rgba[1]}/${p.rgba[2]}`).then(() => {
-        painter.style.display = 'none';
         loadData();
     });
 }
