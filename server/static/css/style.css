@@ -3,11 +3,18 @@ html, body {
    width: 100%;
    margin: 0;
    padding: 0;
+   background-color: black;
 }
 .canvas-wrapper {
     height: 100%;
     width: 100%;
     text-align: center;
+}
+#canvas {
+    transform-origin: 0 0;
+    transform: scale(1);
+    image-rendering: pixelated;
+    image-rendering: crisp-edges;
 }
 .controls {
     background-color: rgba(255, 255, 255, 0.8);
@@ -26,9 +33,11 @@ html, body {
 .controls-zoom {
     margin: 12px 24px;
 }
-#canvas {
-    transform-origin: 0 0;
-    transform: scale(1);
-    image-rendering: pixelated;
-    image-rendering: crisp-edges;
+.painter {
+    background-color: rgba(255, 255, 255, 0.8);
+    position: fixed;
+    top: 0;
+    left: 0;
+    border-radius: 5px;
+    padding: 5px;
 }

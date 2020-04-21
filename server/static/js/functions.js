@@ -28,3 +28,22 @@ function setCookie(name, value, options = {}) {
 
     document.cookie = updatedCookie;
 }
+
+function componentToHex(c) {
+    let hex = c.toString(16);
+    return hex.length == 1 ? "0" + hex : hex;
+}
+
+function rgbaToHex(rgba) {
+    return "#" + componentToHex(rgba[0]) + componentToHex(rgba[1]) + componentToHex(rgba[2]);
+}
+
+function hexToRgba(hex) {
+    let result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+    return result ? [
+        parseInt(result[1], 16),
+        parseInt(result[2], 16),
+        parseInt(result[3], 16),
+        255
+    ] : [0, 0, 0, 255];
+}

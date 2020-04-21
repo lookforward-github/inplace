@@ -3,6 +3,7 @@ ctx.imageSmoothingEnabled = false;
 let imageData;
 let height = 1000, width = 1000;
 let scale = getCookie('scale', 1);
+let p = {x: 0, y: 0, rgba: [0, 0, 0, 255]}
 
 scroller = new FTScroller(canvasWrapper, {
 	scrollbars: false,
@@ -16,8 +17,8 @@ zoomCanvas(scale);
 
 if (canvas.style.zoom === undefined) {
     zoom.max = 8;
-    zoom.value = getCookie('scale', 1);
 }
+zoom.value = getCookie('scale', 1);
 
 function loadData() {
     let start = Date.now();
@@ -48,14 +49,22 @@ function zoomCanvas(value) {
         canvas.style.zoom = scale;
     } else {
         canvas.style.transform = `scale(${scale})`;
-        canvas.width = 1000 * scale;
-        canvas.height = 1000 * scale;
+        canvas.width = width * scale;
+        canvas.height = height * scale;
         redraw();
     }
-    scroller.updateDimensions(1000 * scale, 1000 * scale);
+    scroller.updateDimensions(width * scale, height * scale);
 }
 
-function getMousePosition(canvas, event) {
+var rgbToHex = function (rgb) {
+  var hex = Number(rgb).toString(16);
+  if (hex.length < 2) {
+       hex = "0" + hex;
+  }
+  return hex;
+};
+
+canvas.addEventListener('click', function(event) {
     let rect = canvas.getBoundingClientRect();
     let x = 0, y = 0;
     if (canvas.style.zoom === undefined) {
@@ -65,21 +74,33 @@ function getMousePosition(canvas, event) {
         x = Math.floor((event.clientX - rect.left * scale) / scale);
         y = Math.floor((event.clientY - rect.top * scale) / scale);
     }
+    p.x = x;
+    p.y = y;
+
     console.log("Coordinates:", x, y);
+
     painter.style.display = 'block';
-    fetch(`/paint/${x}/${y}/0/0/0`).then(() => {
-        loadData();
-    })
+    painterInput.value = rgbaToHex(ctx.getImageData(x, y, 1, 1).data);
+});
+
+function changeColor(hex) {
+    p.rgba = hexToRgba(hex);
 }
 
-canvas.addEventListener("click", function(e) {
-    getMousePosition(canvas, e);
-});
+function paint() {
+    fetch(`/paint/${p.x}/${p.y}/${p.rgba[0]}/${p.rgba[1]}/${p.rgba[2]}`).then(() => {
+        painter.style.display = 'none';
+        loadData();
+    });
+}
+
+window.addEventListener('scroll', function(event) {
+    console.log('scroll');
+    event.preventDefault();
+}, false);
 
 var hammertime = new Hammer(canvas);
 hammertime.get('pinch').set({ enable: true });
-hammertime.on('pinch', function(ev) {
-	console.log(ev);
-});
+hammertime.on('pinch', function(e) { console.log(e) });
 
 loadData();
