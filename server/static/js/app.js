@@ -87,8 +87,12 @@ function changeColor(hex) {
 }
 
 function paint() {
+    paintButton.disabled = true;
     fetch(`/paint/${p.x}/${p.y}/${p.rgba[0]}/${p.rgba[1]}/${p.rgba[2]}`).then(() => {
+        paintButton.disabled = false;
         loadData();
+    }).catch(res => {
+        paintButton.disabled = false;
     });
 }
 
