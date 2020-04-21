@@ -1,12 +1,12 @@
 from flask import Flask, render_template, send_file
 import io
 
-from server.data import Data
+from data import Data
 
 app = Flask(__name__)
 
-CANVAS_HEIGHT = 1000
-CANVAS_WIDTH = 1000
+CANVAS_HEIGHT = 200
+CANVAS_WIDTH = 200
 data = Data(CANVAS_WIDTH * CANVAS_HEIGHT)
 
 

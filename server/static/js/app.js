@@ -1,15 +1,15 @@
 let ctx = canvas.getContext("2d");
 ctx.imageSmoothingEnabled = false;
 let imageData;
-let height = 1000, width = 1000;
-let scale = getCookie('scale', 1);
+let height = 200, width = 200;
+let scale = getCookie('scale', 5);
 let p = {x: 0, y: 0, rgba: [0, 0, 0, 255]}
 
 scroller = new FTScroller(canvasWrapper, {
 	scrollbars: false,
 	bouncing: false,
-	contentWidth: 1000,
-	contentHeight: 1000,
+	contentWidth: height,
+	contentHeight: width,
 	scrollBoundary: 10,
 	updateOnWindowResize: true
 });
