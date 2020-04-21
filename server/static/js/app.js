@@ -104,3 +104,5 @@ hammertime.get('pinch').set({ enable: true });
 hammertime.on('pinch', function(e) { console.log(e) });
 
 loadData();
+
+setInterval(loadData, 5000);
