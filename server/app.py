@@ -24,7 +24,7 @@ def get_data():
 
 @app.route('/paint/<int:x>/<int:y>/<int:r>/<int:g>/<int:b>')
 def paint(x, y, r, g, b):
-    offset = (x + 1000 * y) * 4
+    offset = (x + CANVAS_HEIGHT * y) * 4
     data.change(offset, r, g, b)
     return 'ok'
 
