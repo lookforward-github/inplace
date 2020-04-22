@@ -8,7 +8,7 @@ let p = {x: 0, y: 0, rgba: [0, 0, 0, 255]}
 
 zoomCanvas(scale);
 
-console.log = function (...messages) {
+/*console.log = function (...messages) {
     while (logger.childNodes.length > 100) {
         logger.removeChild(logger.firstChild);
     }
@@ -17,7 +17,7 @@ console.log = function (...messages) {
     }
     logger.innerHTML += '<br>';
     logger.scrollTop = logger.scrollHeight;
-}
+}*/
 
 function loadData() {
     let start = Date.now();
@@ -78,7 +78,8 @@ hammertime.on('tap', function(e) {
     p.y = y;
 
     fetch(`/paint/${p.x}/${p.y}/${p.rgba[0]}/${p.rgba[1]}/${p.rgba[2]}`).then(() => {
-        loadData();
+        console.log(p)
+        ctx.putImageData(new ImageData(new Uint8ClampedArray(p.rgba), 1, 1), x, y);
     });
 });
 
