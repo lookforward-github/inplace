@@ -3,7 +3,7 @@
 <head>
     <title>/in/place</title>
     <meta charset=utf-8>
-    <meta name="viewport" content="user-scalable=no, width=device-width, initial-scale=1, maximum-scale=1">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
     <link rel="stylesheet" type="text/css" href="/static/css/style.css">
     <link rel="shortcut icon" href="/static/img/icons/favicon.png" type="image/png"/>
     <script src="https://kit.fontawesome.com/b572bccbd7.js" crossorigin="anonymous"></script>
@@ -11,24 +11,17 @@
     <script type='text/javascript' src='/static/js/libs/hammer.min.js'></script>
     <script type='text/javascript' src="/static/js/functions.js"></script>
 </head>
-<body>
+<body id="body">
+    <pre id="logger" style="display: none; color: white; height: 100px; overflow-y: auto; position: fixed; top: 0; left: 0; right: 0;"></pre>
     <div class="canvas-wrapper" id="canvasWrapper">
         <canvas id="canvas" height="200" width="200"></canvas>
     </div>
-    <div class="controls" id="controls">
-        <i class="controls-drag fas fa-arrows-alt" draggable="true" ondrag="dragControls()"></i>
-        <input class="controls-zoom" id="zoom" type="range" min="1" max="16" step="0.1" value="1" onInput="zoomCanvas(this.value)">
-    </div>
     <div id="painter" class="painter" id="painter">
         <div class="painter-info"></div>
-        <label>Current color:</label>
-        <input id="painterPixelColor" class="painter-input" type="color" disabled>
-        <hr>
-        <label>New color:</label>
+        <label>Select color here</label>
         <input id="painterInput" class="painter-input" onChange="changeColor(this.value)" type="color">
-        <button class="painter-button" id="paintButton" onClick="paint()">Paint!</button>
+        <label>and tap anywhere to paint!</label>
     </div>
     <script type='text/javascript' src="/static/js/app.js"></script>
-    <script type='text/javascript' src="/static/js/controls.js"></script>
 </body>
 </html>

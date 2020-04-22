@@ -4,6 +4,7 @@ html, body {
    margin: 0;
    padding: 0;
    background-color: black;
+   overflow: hidden;
 }
 .canvas-wrapper {
     height: 100%;
@@ -11,33 +12,27 @@ html, body {
     text-align: center;
 }
 #canvas {
-    transform-origin: 0 0;
+    position: absolute;
+    left: 0;
+    top: 120px;
+    transform-origin: center;
     transform: scale(1);
     image-rendering: pixelated;
     image-rendering: crisp-edges;
 }
-.controls {
+.painter {
     background-color: rgba(255, 255, 255, 0.8);
     position: fixed;
     top: 0;
     left: 0;
-    border-radius: 5px;
-}
-.controls-drag {
-    color: red;
-    position: absolute;
-    cursor: grab;
-    width: 16px;
-    height: 16px;
-}
-.controls-zoom {
-    margin: 12px 24px;
-}
-.painter {
-    background-color: rgba(255, 255, 255, 0.8);
-    position: fixed;
-    top: 64px;
-    left: 0;
-    border-radius: 5px;
     padding: 5px;
+    text-align: center;
+}
+@media(max-width: 480px) {
+    .painter {
+        top: unset;
+        bottom: 0;
+        left: 0;
+        right: 0;
+    }
 }

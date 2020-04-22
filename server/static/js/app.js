@@ -2,23 +2,22 @@ let ctx = canvas.getContext("2d");
 ctx.imageSmoothingEnabled = false;
 let imageData;
 let height = 200, width = 200;
-let scale = getCookie('scale', 5);
+let scale = getCookie('scale', 4);
+let minScale = 1, maxScale = 14;
 let p = {x: 0, y: 0, rgba: [0, 0, 0, 255]}
 
-scroller = new FTScroller(canvasWrapper, {
-	scrollbars: false,
-	bouncing: false,
-	contentWidth: height,
-	contentHeight: width,
-	scrollBoundary: 10,
-	updateOnWindowResize: true
-});
 zoomCanvas(scale);
 
-if (canvas.style.zoom === undefined) {
-    zoom.max = 8;
+console.log = function (...messages) {
+    while (logger.childNodes.length > 100) {
+        logger.removeChild(logger.firstChild);
+    }
+    for (message of messages) {
+        logger.innerHTML += (typeof message == 'object' ? JSON.stringify(message) : message) + ' ';
+    }
+    logger.innerHTML += '<br>';
+    logger.scrollTop = logger.scrollHeight;
 }
-zoom.value = getCookie('scale', 1);
 
 function loadData() {
     let start = Date.now();
@@ -38,72 +37,76 @@ function redraw() {
     if (imageData) {
         let start = Date.now();
         ctx.putImageData(imageData, 0, 0);
-        console.log("Redrawn in", Date.now() - start, "ms");
+        //console.log("Redrawn in", Date.now() - start, "ms");
     }
 }
 
 function zoomCanvas(value) {
+    value = value < minScale ? minScale : value;
+    value = value > maxScale ? maxScale : value;
+
     scale = parseFloat(value);
     setCookie('scale', scale);
-    if (canvas.style.zoom !== undefined) {
-        canvas.style.zoom = scale;
-    } else {
-        canvas.style.transform = `scale(${scale})`;
-        canvas.width = width * scale;
-        canvas.height = height * scale;
-        redraw();
-    }
-    scroller.updateDimensions(width * scale, height * scale);
+
+    canvas.style.transform = `scale(${scale})`;
+
+    redraw();
 }
-
-var rgbToHex = function (rgb) {
-  var hex = Number(rgb).toString(16);
-  if (hex.length < 2) {
-       hex = "0" + hex;
-  }
-  return hex;
-};
-
-canvas.addEventListener('click', function(event) {
-    let rect = canvas.getBoundingClientRect();
-    let x = 0, y = 0;
-    if (canvas.style.zoom === undefined) {
-        x = Math.floor((event.clientX - rect.left) / scale);
-        y = Math.floor((event.clientY - rect.top) / scale);
-    } else {
-        x = Math.floor((event.clientX - rect.left * scale) / scale);
-        y = Math.floor((event.clientY - rect.top * scale) / scale);
-    }
-    p.x = x;
-    p.y = y;
-
-    console.log("Coordinates:", x, y);
-
-    painterPixelColor.value = rgbaToHex(ctx.getImageData(x, y, 1, 1).data);
-});
 
 function changeColor(hex) {
     p.rgba = hexToRgba(hex);
 }
 
-function paint() {
-    paintButton.disabled = true;
-    fetch(`/paint/${p.x}/${p.y}/${p.rgba[0]}/${p.rgba[1]}/${p.rgba[2]}`).then(() => {
-        paintButton.disabled = false;
-        loadData();
-    }).catch(res => {
-        paintButton.disabled = false;
-    });
-}
-
-window.addEventListener('scroll', function(event) {
-    console.log('scroll');
-    event.preventDefault();
+window.addEventListener('wheel', function(event) {
+    if (event.deltaY > 0) {
+        zoomCanvas(scale - 1);
+    } else if (event.deltaY < 0) {
+        zoomCanvas(scale + 1);
+    }
 }, false);
 
-var hammertime = new Hammer(canvas);
+var hammertime = new Hammer(body);
 hammertime.get('pinch').set({ enable: true });
-hammertime.on('pinch', function(e) { console.log(e) });
+hammertime.get('pan').set({ direction: Hammer.DIRECTION_ALL });
+
+hammertime.on('tap', function(e) {
+    let rect = canvas.getBoundingClientRect();
+    let x = 0, y = 0;
+    x = Math.floor((event.clientX - rect.left) / scale);
+    y = Math.floor((event.clientY - rect.top) / scale);
+    p.x = x;
+    p.y = y;
+
+    fetch(`/paint/${p.x}/${p.y}/${p.rgba[0]}/${p.rgba[1]}/${p.rgba[2]}`).then(() => {
+        loadData();
+    });
+});
+
+let canvasScale = scale;
+hammertime.on('pinchstart', function(e) {
+    canvasScale = scale;
+});
+hammertime.on('pinchmove', function(e) {
+    zoomCanvas(canvasScale * e.scale);
+});
+
+let canvasLeft, canvasTop;
+
+canvas.style.left = getCookie('canvasLeft', '0px');
+canvas.style.top = getCookie('canvasTop', '0px');
+
+hammertime.on('panstart', function(e) {
+    canvasLeft = parseInt(canvas.style.left || 0);
+    canvasTop = parseInt(canvas.style.top || 0);
+});
+hammertime.on('panmove', function(e) {
+    canvas.style.left = (canvasLeft + e.deltaX) + 'px';
+    canvas.style.top = (canvasTop + e.deltaY) + 'px';
+});
+hammertime.on('panend', function(e) {
+    setCookie('canvasLeft', canvas.style.left);
+    setCookie('canvasTop', canvas.style.top);
+});
 
 loadData();
 
