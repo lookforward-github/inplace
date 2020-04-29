@@ -26,19 +26,17 @@ function loadData() {
 
 let prevMilestone = 0;
 function historyChange(milestone) {
-    if (milestone < prevMilestone) {
-        ctx.beginPath();
-        ctx.rect(0, 0, width, height);
-        ctx.fillStyle = "white";
-        ctx.fill();
-        for (var update of history.slice(0, milestone)) {
+    if (milestone > prevMilestone) { // forward
+        for (var update of history.slice(prevMilestone, milestone)) {
             let data = update.data;
             let pixel = new ImageData(new Uint8ClampedArray(data.rgba), 1, 1);
             ctx.putImageData(pixel, data.x, data.y);
         }
-    } else {
-        for (var update of history.slice(prevMilestone, milestone)) {
-            let data = update.data;
+    } else { // backward
+        let historySlice = history.slice(0, prevMilestone - 1).reverse();
+        for (var update of history.slice(milestone, prevMilestone).reverse()) {
+            let data = historySlice.find(el => el.data.x == update.data.x && el.data.y == update.data.y);
+            data = data !== undefined ? data.data : {x: update.data.x, y: update.data.y, rgba: [255, 255, 255, 255]};
             let pixel = new ImageData(new Uint8ClampedArray(data.rgba), 1, 1);
             ctx.putImageData(pixel, data.x, data.y);
         }

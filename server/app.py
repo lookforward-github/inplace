@@ -23,6 +23,7 @@ def get_data():
     response.headers['X-Last-ID'] = len(data.history)
     return response
 
+
 @app.route('/get-delta/<int:id>')
 def get_delta(id):
     return json.dumps(data.history[id:])
@@ -30,7 +31,6 @@ def get_delta(id):
 
 @app.route('/paint', methods=['POST'])
 def paint():
-    print(request.json)
     update = data.change(request.json['data'], request.json['last_id'])
     return json.dumps(update)
 
