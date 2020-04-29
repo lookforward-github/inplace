@@ -37,6 +37,7 @@ function historyChange(milestone) {
         for (var update of history.slice(milestone, prevMilestone).reverse()) {
             let data = historySlice.find(el => el.data.x == update.data.x && el.data.y == update.data.y);
             data = data !== undefined ? data.data : {x: update.data.x, y: update.data.y, rgba: [255, 255, 255, 255]};
+            console.log(data);
             let pixel = new ImageData(new Uint8ClampedArray(data.rgba), 1, 1);
             ctx.putImageData(pixel, data.x, data.y);
         }

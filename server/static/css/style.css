@@ -27,6 +27,8 @@ html, body {
     left: 0;
     padding: 5px;
     text-align: left;
+    border-right: 1px solid #ccc;
+    border-bottom: 1px solid #ccc;
 }
 .rewind {
     position: fixed;

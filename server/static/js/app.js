@@ -72,6 +72,9 @@ hammertime.get('pinch').set({ enable: true });
 hammertime.get('pan').set({ direction: Hammer.DIRECTION_ALL });
 
 hammertime.on('tap', function(e) {
+    if (e.target.id.startsWith('painter')) {
+        return
+    }
     let rect = canvas.getBoundingClientRect();
     let x = 0, y = 0;
     x = Math.floor((event.clientX - rect.left) / scale);
