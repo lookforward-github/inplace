@@ -32,7 +32,6 @@ class Data(object):
             'id': len(self.history),
             'data': json_data
         })
-        print(last_id + 1)
         return self.history[last_id + 1:]
 
     def load(self):

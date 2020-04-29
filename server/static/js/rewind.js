@@ -4,11 +4,10 @@ let imageData;
 let height = 200, width = 200;
 let scale = getCookie('scale', 4);
 let minScale = 1, maxScale = 14;
-let p = {x: 0, y: 0, rgba: [0, 0, 0, 255]}
-let last_id = 0;
 let history;
 
 zoomCanvas(scale);
+
 ctx.beginPath();
 ctx.rect(0, 0, width, height);
 ctx.fillStyle = "white";

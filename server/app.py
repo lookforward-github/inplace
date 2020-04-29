@@ -1,4 +1,6 @@
 import json
+import time
+from hashlib import md5
 
 from flask import Flask, render_template, send_file, request, make_response
 import io
@@ -10,6 +12,7 @@ app = Flask(__name__)
 CANVAS_HEIGHT = 200
 CANVAS_WIDTH = 200
 data = Data(CANVAS_WIDTH, CANVAS_HEIGHT)
+release = "1.0"
 
 
 @app.route('/')
@@ -21,6 +24,7 @@ def index():
 def get_data():
     response = make_response(send_file(io.BytesIO(data.array), mimetype='application/binary', cache_timeout=-1))
     response.headers['X-Last-ID'] = len(data.history)
+    response.headers['Release'] = release
     return response
 
 
@@ -31,8 +35,22 @@ def get_delta(id):
 
 @app.route('/paint', methods=['POST'])
 def paint():
+    if not validate_request():
+        return get_delta(request.json['last_id'])
+
     update = data.change(request.json['data'], request.json['last_id'])
     return json.dumps(update)
+
+
+def validate_request():
+    timestamp = request.headers['Timestamp']
+    if time.time() - int(timestamp) / 1000 > 5:
+        return False
+    checksum = md5(release.encode('utf-8') + timestamp.encode('utf-8') + request.data).hexdigest()
+    if request.headers['Checksum'] != checksum:
+        return False
+
+    return True
 
 
 @app.route('/flush')

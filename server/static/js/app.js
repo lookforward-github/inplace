@@ -6,6 +6,7 @@ let scale = getCookie('scale', 4);
 let minScale = 1, maxScale = 14;
 let p = {x: 0, y: 0, rgba: [0, 0, 0, 255]}
 let last_id = 0;
+let release = "";
 
 zoomCanvas(scale);
 
@@ -13,6 +14,7 @@ function loadData() {
     let start = Date.now();
     fetch('/get-data').then(data => {
         last_id = parseInt(data.headers.get('X-Last-ID'));
+        release = data.headers.get('Release');
         return data.arrayBuffer()
     }).then(data => {
         data = new Uint8ClampedArray(data);
@@ -85,13 +87,17 @@ hammertime.on('tap', function(e) {
 
         ctx.putImageData(new ImageData(new Uint8ClampedArray(p.rgba), 1, 1), p.x, p.y);
 
+        let timestamp = Date.now();
+        let body = JSON.stringify({data: p, last_id: last_id});
         fetch('/paint', {
             method: 'POST',
             cache: 'no-cache',
             headers: {
-              'Content-Type': 'application/json'
+              'Content-Type': 'application/json',
+              'Timestamp': timestamp,
+              'Checksum': MD5(release + String(timestamp) + body)
             },
-            body: JSON.stringify({data: p, last_id: last_id})
+            body: body
         }).then(data => {
           return data.json()
         }).then(json => {

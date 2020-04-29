@@ -47,3 +47,15 @@ function hexToRgba(hex) {
         255
     ] : [0, 0, 0, 255];
 }
+
+Object.defineProperty(String.prototype, 'hashCode', {
+  value: function() {
+    var hash = 0, i, chr;
+    for (i = 0; i < this.length; i++) {
+      chr   = this.charCodeAt(i);
+      hash  = ((hash << 5) - hash) + chr;
+      hash |= 0;
+    }
+    return hash;
+  }
+});
