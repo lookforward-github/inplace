@@ -1,6 +1,6 @@
 import json
 
-from flask import Flask, render_template, send_file, request
+from flask import Flask, render_template, send_file, request, make_response
 import io
 
 from data import Data
@@ -19,14 +19,13 @@ def index():
 
 @app.route('/get-data')
 def get_data():
-    return send_file(io.BytesIO(data.array),
-                     mimetype='application/binary',
-                     cache_timeout=-1)
-
+    response = make_response(send_file(io.BytesIO(data.array), mimetype='application/binary', cache_timeout=-1))
+    response.headers['X-Last-ID'] = len(data.history)
+    return response
 
 @app.route('/get-delta/<int:id>')
 def get_delta(id):
-    return json.dumps(data.changes[id + 1:])
+    return json.dumps(data.history[id + 1:])
 
 
 @app.route('/paint', methods=['POST'])

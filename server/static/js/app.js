@@ -12,6 +12,7 @@ zoomCanvas(scale);
 function loadData() {
     let start = Date.now();
     fetch('/get-data').then(data => {
+        last_id = parseInt(data.headers.get('X-Last-ID'));
         return data.arrayBuffer()
     }).then(data => {
         data = new Uint8ClampedArray(data);
@@ -77,27 +78,29 @@ hammertime.on('tap', function(e) {
     y = Math.floor((event.clientY - rect.top) / scale);
     p.x = x;
     p.y = y;
+    if (x > 0 && x < width && y > 0 && y < height) {
 
-    ctx.putImageData(new ImageData(new Uint8ClampedArray(p.rgba), 1, 1), p.x, p.y);
+        ctx.putImageData(new ImageData(new Uint8ClampedArray(p.rgba), 1, 1), p.x, p.y);
 
-    fetch('/paint', {
-        method: 'POST',
-        cache: 'no-cache',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({data: p, last_id: last_id})
-    }).then(data => {
-      return data.json()
-    }).then(json => {
-      for (var update of json) {
-        let data = update.data;
-        let pixel = new ImageData(new Uint8ClampedArray(data.rgba), 1, 1);
-        ctx.putImageData(pixel, data.x, data.y);
-        last_id = update.id;
-      }
-      imageData = ctx.getImageData(0, 0, width, height);
-    })
+        fetch('/paint', {
+            method: 'POST',
+            cache: 'no-cache',
+            headers: {
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({data: p, last_id: last_id})
+        }).then(data => {
+          return data.json()
+        }).then(json => {
+          for (var update of json) {
+            let data = update.data;
+            let pixel = new ImageData(new Uint8ClampedArray(data.rgba), 1, 1);
+            ctx.putImageData(pixel, data.x, data.y);
+            last_id = update.id;
+          }
+          imageData = ctx.getImageData(0, 0, width, height);
+        });
+    }
 });
 
 let canvasScale = scale;
