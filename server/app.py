@@ -1,4 +1,6 @@
-from flask import Flask, render_template, send_file
+import json
+
+from flask import Flask, render_template, send_file, request
 import io
 
 from data import Data
@@ -7,7 +9,7 @@ app = Flask(__name__)
 
 CANVAS_HEIGHT = 200
 CANVAS_WIDTH = 200
-data = Data(CANVAS_WIDTH * CANVAS_HEIGHT)
+data = Data(CANVAS_WIDTH, CANVAS_HEIGHT)
 
 
 @app.route('/')
@@ -22,16 +24,21 @@ def get_data():
                      cache_timeout=-1)
 
 
-@app.route('/paint/<int:x>/<int:y>/<int:r>/<int:g>/<int:b>')
-def paint(x, y, r, g, b):
-    offset = (x + CANVAS_HEIGHT * y) * 4
-    data.change(offset, r, g, b)
-    return 'ok'
+@app.route('/get-delta/<int:id>')
+def get_delta(id):
+    return json.dumps(data.changes[id + 1:])
+
+
+@app.route('/paint', methods=['POST'])
+def paint():
+    print(request.json)
+    update = data.change(request.json['data'], request.json['last_id'])
+    return json.dumps(update)
 
 
 @app.route('/flush')
 def flush():
-    data.flush(CANVAS_HEIGHT * CANVAS_WIDTH)
+    data.flush()
     return 'ok'
 
 

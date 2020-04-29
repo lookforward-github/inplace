@@ -5,19 +5,9 @@ let height = 200, width = 200;
 let scale = getCookie('scale', 4);
 let minScale = 1, maxScale = 14;
 let p = {x: 0, y: 0, rgba: [0, 0, 0, 255]}
+let last_id = 0;
 
 zoomCanvas(scale);
-
-/*console.log = function (...messages) {
-    while (logger.childNodes.length > 100) {
-        logger.removeChild(logger.firstChild);
-    }
-    for (message of messages) {
-        logger.innerHTML += (typeof message == 'object' ? JSON.stringify(message) : message) + ' ';
-    }
-    logger.innerHTML += '<br>';
-    logger.scrollTop = logger.scrollHeight;
-}*/
 
 function loadData() {
     let start = Date.now();
@@ -33,11 +23,24 @@ function loadData() {
     }).catch(reason => { console.error(reason) })
 }
 
+function loadDelta() {
+    let start = Date.now();
+    fetch(`/get-delta/${last_id}`).then(data => {
+        return data.json()
+    }).then(json => {
+      for (var update of json) {
+        let data = update.data;
+        let pixel = new ImageData(new Uint8ClampedArray(data.rgba), 1, 1);
+        ctx.putImageData(pixel, data.x, data.y);
+        last_id = update.id;
+      }
+    })
+}
+
 function redraw() {
     if (imageData) {
         let start = Date.now();
         ctx.putImageData(imageData, 0, 0);
-        //console.log("Redrawn in", Date.now() - start, "ms");
     }
 }
 
@@ -77,10 +80,23 @@ hammertime.on('tap', function(e) {
     p.x = x;
     p.y = y;
 
-    fetch(`/paint/${p.x}/${p.y}/${p.rgba[0]}/${p.rgba[1]}/${p.rgba[2]}`).then(() => {
-        console.log(p)
-        ctx.putImageData(new ImageData(new Uint8ClampedArray(p.rgba), 1, 1), x, y);
-    });
+    fetch('/paint', {
+        method: 'POST',
+        cache: 'no-cache',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({data: p, last_id: last_id})
+    }).then(data => {
+      return data.json()
+    }).then(json => {
+      for (var update of json) {
+        let data = update.data;
+        let pixel = new ImageData(new Uint8ClampedArray(data.rgba), 1, 1);
+        ctx.putImageData(pixel, data.x, data.y);
+        last_id = update.id;
+      }
+    })
 });
 
 let canvasScale = scale;
@@ -111,4 +127,4 @@ hammertime.on('panend', function(e) {
 
 loadData();
 
-setInterval(loadData, 5000);
+setInterval(loadDelta, 1000);
