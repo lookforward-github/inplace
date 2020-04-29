@@ -14,11 +14,8 @@ function loadData() {
     fetch('/get-data').then(data => {
         return data.arrayBuffer()
     }).then(data => {
-        console.log("Data loaded in", Date.now() - start, "ms");
         data = new Uint8ClampedArray(data);
-        console.log("Clamped array in", Date.now() - start, "ms");
         imageData = new ImageData(data, height, width);
-        console.log("Data parsed in", Date.now() - start, "ms");
         redraw();
     }).catch(reason => { console.error(reason) })
 }
@@ -34,6 +31,7 @@ function loadDelta() {
         ctx.putImageData(pixel, data.x, data.y);
         last_id = update.id;
       }
+      imageData = ctx.getImageData(0, 0, width, height);
     })
 }
 
@@ -96,6 +94,7 @@ hammertime.on('tap', function(e) {
         ctx.putImageData(pixel, data.x, data.y);
         last_id = update.id;
       }
+      imageData = ctx.getImageData(0, 0, width, height);
     })
 });
 
