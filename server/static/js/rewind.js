@@ -24,17 +24,26 @@ function loadData() {
     }).catch(reason => { console.error(reason) })
 }
 
+let prevMilestone = 0;
 function historyChange(milestone) {
-    ctx.beginPath();
-    ctx.rect(0, 0, width, height);
-    ctx.fillStyle = "white";
-    ctx.fill();
-    console.log(history, milestone)
-    for (var update of history.slice(0, milestone)) {
-        let data = update.data;
-        let pixel = new ImageData(new Uint8ClampedArray(data.rgba), 1, 1);
-        ctx.putImageData(pixel, data.x, data.y);
+    if (milestone < prevMilestone) {
+        ctx.beginPath();
+        ctx.rect(0, 0, width, height);
+        ctx.fillStyle = "white";
+        ctx.fill();
+        for (var update of history.slice(0, milestone)) {
+            let data = update.data;
+            let pixel = new ImageData(new Uint8ClampedArray(data.rgba), 1, 1);
+            ctx.putImageData(pixel, data.x, data.y);
+        }
+    } else {
+        for (var update of history.slice(prevMilestone, milestone)) {
+            let data = update.data;
+            let pixel = new ImageData(new Uint8ClampedArray(data.rgba), 1, 1);
+            ctx.putImageData(pixel, data.x, data.y);
+        }
     }
+    prevMilestone = milestone;
 }
 
 function redraw() {
