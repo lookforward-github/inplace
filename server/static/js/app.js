@@ -78,6 +78,8 @@ hammertime.on('tap', function(e) {
     p.x = x;
     p.y = y;
 
+    ctx.putImageData(new ImageData(new Uint8ClampedArray(p.rgba), 1, 1), p.x, p.y);
+
     fetch('/paint', {
         method: 'POST',
         cache: 'no-cache',
