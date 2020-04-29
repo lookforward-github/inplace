@@ -67,8 +67,11 @@ function zoomCanvas(value) {
     redraw();
 }
 
-let playInterval;
+let playInterval = null;
 function play() {
+    if (playInterval) {
+        return;
+    }
     playInterval = setInterval(() => {
         if (historyRange.max == historyRange.value) {
             pause();
@@ -80,6 +83,7 @@ function play() {
 
 function pause() {
     clearInterval(playInterval);
+    playInterval = null;
 }
 
 window.addEventListener('wheel', function(event) {
