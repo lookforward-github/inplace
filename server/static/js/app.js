@@ -95,7 +95,7 @@ hammertime.on('tap', function(e) {
             headers: {
               'Content-Type': 'application/json',
               'Timestamp': timestamp,
-              'Checksum': MD5(release + String(timestamp) + body)
+              'Checksum': MD5(String(timestamp) + release + body)
             },
             body: body
         }).then(data => {

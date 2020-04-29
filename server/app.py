@@ -43,10 +43,12 @@ def paint():
 
 
 def validate_request():
+    if 'Timestamp' not in request.headers or 'Checksum' not in request.headers:
+        return False
     timestamp = request.headers['Timestamp']
     if time.time() - int(timestamp) / 1000 > 5:
         return False
-    checksum = md5(release.encode('utf-8') + timestamp.encode('utf-8') + request.data).hexdigest()
+    checksum = md5(timestamp.encode('utf-8') + release.encode('utf-8') + request.data).hexdigest()
     if request.headers['Checksum'] != checksum:
         return False
 
