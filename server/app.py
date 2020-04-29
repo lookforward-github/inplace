@@ -12,7 +12,7 @@ app = Flask(__name__)
 CANVAS_HEIGHT = 200
 CANVAS_WIDTH = 200
 data = Data(CANVAS_WIDTH, CANVAS_HEIGHT)
-release = "1.0"
+release = "1.1"
 
 activity = {}
 
