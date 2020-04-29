@@ -25,7 +25,7 @@ def get_data():
 
 @app.route('/get-delta/<int:id>')
 def get_delta(id):
-    return json.dumps(data.history[id + 1:])
+    return json.dumps(data.history[id:])
 
 
 @app.route('/paint', methods=['POST'])
@@ -45,6 +45,11 @@ def flush():
 def dump():
     data.dump()
     return 'ok'
+
+
+@app.route('/rewind')
+def rewind():
+    return render_template('rewind.html')
 
 
 if __name__ == '__main__':

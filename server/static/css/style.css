@@ -26,7 +26,13 @@ html, body {
     top: 0;
     left: 0;
     padding: 5px;
-    text-align: center;
+    text-align: left;
+}
+.rewind {
+    position: fixed;
+    top: 0;
+    left: 0;
+    padding: 5px;
 }
 @media(max-width: 480px) {
     .painter {

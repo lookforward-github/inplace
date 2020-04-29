@@ -15,16 +15,7 @@
     <div class="canvas-wrapper" id="canvasWrapper">
         <canvas id="canvas" height="200" width="200"></canvas>
     </div>
-    <div id="painter" class="painter" id="painter">
-        <div class="painter-info"></div>
-        <label>Select color here</label>
-        <input id="painterInput" class="painter-input" onChange="changeColor(this.value)" type="color">
-        <label>and tap anywhere to paint!</label>
-        <hr>
-        <label>Use mouse or finger to move canvas
-        <br>
-        <label>Scroll or pitch to zoom</label>
-    </div>
-    <script type='text/javascript' src="/static/js/app.js"></script>
+    <input type="range" class="rewind" id="historyRange" min="0" max="0" onInput="historyChange(this.value)">
+    <script type='text/javascript' src="/static/js/rewind.js"></script>
 </body>
 </html>

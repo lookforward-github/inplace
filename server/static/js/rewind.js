@@ -6,34 +6,35 @@ let scale = getCookie('scale', 4);
 let minScale = 1, maxScale = 14;
 let p = {x: 0, y: 0, rgba: [0, 0, 0, 255]}
 let last_id = 0;
+let history;
 
 zoomCanvas(scale);
+ctx.beginPath();
+ctx.rect(0, 0, width, height);
+ctx.fillStyle = "white";
+ctx.fill();
 
 function loadData() {
     let start = Date.now();
-    fetch('/get-data').then(data => {
-        last_id = parseInt(data.headers.get('X-Last-ID'));
-        return data.arrayBuffer()
-    }).then(data => {
-        data = new Uint8ClampedArray(data);
-        imageData = new ImageData(data, height, width);
-        redraw();
+    fetch('/get-delta/0').then(data => {
+        return data.json()
+    }).then(json => {
+        history = json;
+        historyRange.max = json.length;
     }).catch(reason => { console.error(reason) })
 }
 
-function loadDelta() {
-    let start = Date.now();
-    fetch(`/get-delta/${last_id}`).then(data => {
-        return data.json()
-    }).then(json => {
-      for (var update of json) {
+function historyChange(milestone) {
+    ctx.beginPath();
+    ctx.rect(0, 0, width, height);
+    ctx.fillStyle = "white";
+    ctx.fill();
+    console.log(history, milestone)
+    for (var update of history.slice(0, milestone)) {
         let data = update.data;
         let pixel = new ImageData(new Uint8ClampedArray(data.rgba), 1, 1);
         ctx.putImageData(pixel, data.x, data.y);
-        last_id = update.id;
-      }
-      imageData = ctx.getImageData(0, 0, width, height);
-    })
+    }
 }
 
 function redraw() {
@@ -55,10 +56,6 @@ function zoomCanvas(value) {
     redraw();
 }
 
-function changeColor(hex) {
-    p.rgba = hexToRgba(hex);
-}
-
 window.addEventListener('wheel', function(event) {
     if (event.deltaY > 0) {
         zoomCanvas(scale - 1);
@@ -70,38 +67,6 @@ window.addEventListener('wheel', function(event) {
 var hammertime = new Hammer(body);
 hammertime.get('pinch').set({ enable: true });
 hammertime.get('pan').set({ direction: Hammer.DIRECTION_ALL });
-
-hammertime.on('tap', function(e) {
-    let rect = canvas.getBoundingClientRect();
-    let x = 0, y = 0;
-    x = Math.floor((event.clientX - rect.left) / scale);
-    y = Math.floor((event.clientY - rect.top) / scale);
-    p.x = x;
-    p.y = y;
-    if (x >= 0 && x < width && y >= 0 && y < height) {
-
-        ctx.putImageData(new ImageData(new Uint8ClampedArray(p.rgba), 1, 1), p.x, p.y);
-
-        fetch('/paint', {
-            method: 'POST',
-            cache: 'no-cache',
-            headers: {
-              'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({data: p, last_id: last_id})
-        }).then(data => {
-          return data.json()
-        }).then(json => {
-          for (var update of json) {
-            let data = update.data;
-            let pixel = new ImageData(new Uint8ClampedArray(data.rgba), 1, 1);
-            ctx.putImageData(pixel, data.x, data.y);
-            last_id = update.id;
-          }
-          imageData = ctx.getImageData(0, 0, width, height);
-        });
-    }
-});
 
 let canvasScale = scale;
 hammertime.on('pinchstart', function(e) {
@@ -121,8 +86,10 @@ hammertime.on('panstart', function(e) {
     canvasTop = parseInt(canvas.style.top || 0);
 });
 hammertime.on('panmove', function(e) {
-    canvas.style.left = (canvasLeft + e.deltaX) + 'px';
-    canvas.style.top = (canvasTop + e.deltaY) + 'px';
+    if (e.target.id != "historyRange") {
+        canvas.style.left = (canvasLeft + e.deltaX) + 'px';
+        canvas.style.top = (canvasTop + e.deltaY) + 'px';
+    }
 });
 hammertime.on('panend', function(e) {
     setCookie('canvasLeft', canvas.style.left);
@@ -130,5 +97,3 @@ hammertime.on('panend', function(e) {
 });
 
 loadData();
-
-setInterval(loadDelta, 1000);
