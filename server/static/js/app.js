@@ -122,8 +122,8 @@ hammertime.on('pinchmove', function(e) {
 
 let canvasLeft, canvasTop;
 
-canvas.style.left = getCookie('canvasLeft', '0px');
-canvas.style.top = getCookie('canvasTop', '0px');
+canvas.style.left = getCookie('canvasLeft', '300px');
+canvas.style.top = getCookie('canvasTop', '300px');
 
 hammertime.on('panstart', function(e) {
     canvasLeft = parseInt(canvas.style.left || 0);
