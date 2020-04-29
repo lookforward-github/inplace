@@ -67,6 +67,21 @@ function zoomCanvas(value) {
     redraw();
 }
 
+let playInterval;
+function play() {
+    playInterval = setInterval(() => {
+        if (historyRange.max == historyRange.value) {
+            pause();
+        }
+        historyChange(prevMilestone + 1);
+        historyRange.value = prevMilestone;
+    }, 1);
+}
+
+function pause() {
+    clearInterval(playInterval);
+}
+
 window.addEventListener('wheel', function(event) {
     if (event.deltaY > 0) {
         zoomCanvas(scale - 1);

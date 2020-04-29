@@ -36,6 +36,18 @@ html, body {
     left: 0;
     width: 100%;
 }
+.play {
+    position: fixed;
+    top: 26px;
+    left: 0;
+    width: 60px;
+}
+.pause {
+    position: fixed;
+    top: 26px;
+    left: 60px;
+    width: 60px;
+}
 @media(max-width: 480px) {
     .painter {
         top: unset;
