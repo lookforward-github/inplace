@@ -26,22 +26,26 @@ function loadData() {
 
 let prevMilestone = 0;
 function historyChange(milestone) {
-console.log(milestone);
+    milestone = parseInt(milestone);
+
     if (milestone > prevMilestone) { // forward
         for (var update of history.slice(prevMilestone, milestone)) {
             let data = update.data;
             let pixel = new ImageData(new Uint8ClampedArray(data.rgba), 1, 1);
             ctx.putImageData(pixel, data.x, data.y);
         }
-    } else { // backward
+    } else if (milestone < prevMilestone) { // backward
         let historySlice = history.slice(0, prevMilestone - 1).reverse();
-        for (var update of history.slice(milestone, prevMilestone).reverse()) {
+        let milestoneSlice = history.slice(milestone, prevMilestone).reverse();
+        for (var update of milestoneSlice) {
             let data = historySlice.find(el => el.data.x == update.data.x && el.data.y == update.data.y);
             data = data !== undefined ? data.data : {x: update.data.x, y: update.data.y, rgba: [255, 255, 255, 255]};
             let pixel = new ImageData(new Uint8ClampedArray(data.rgba), 1, 1);
             ctx.putImageData(pixel, data.x, data.y);
+            historySlice.shift()
         }
     }
+
     prevMilestone = milestone;
 }
 
