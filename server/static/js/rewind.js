@@ -18,8 +18,8 @@ function loadData() {
     fetch('/get-delta/0').then(data => {
         return data.json()
     }).then(json => {
-        history = json;
-        historyRange.max = json.length;
+        history = json.delta;
+        historyRange.max = history.length;
     }).catch(reason => { console.error(reason) })
 }
 
