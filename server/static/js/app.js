@@ -8,10 +8,15 @@ let p = {x: 0, y: 0, rgba: [0, 0, 0, 255]}
 let last_id = 0;
 let release = "";
 
+let uuid = getCookie('uuid', null);
+if (!uuid) {
+    uuid = createUUID();
+    setCookie('uuid', uuid);
+}
+
 zoomCanvas(scale);
 
 function loadData() {
-    let start = Date.now();
     fetch('/get-data').then(data => {
         last_id = parseInt(data.headers.get('X-Last-ID'));
         release = data.headers.get('Release');
@@ -24,11 +29,12 @@ function loadData() {
 }
 
 function loadDelta() {
-    let start = Date.now();
     fetch(`/get-delta/${last_id}`).then(data => {
         return data.json()
     }).then(json => {
-      for (var update of json) {
+      dudes.innerHTML = 'Dude counter: ' + json.dudes;
+
+      for (var update of json.delta) {
         let data = update.data;
         let pixel = new ImageData(new Uint8ClampedArray(data.rgba), 1, 1);
         ctx.putImageData(pixel, data.x, data.y);
@@ -94,6 +100,7 @@ hammertime.on('tap', function(e) {
             cache: 'no-cache',
             headers: {
               'Content-Type': 'application/json',
+              'UUID': uuid,
               'Timestamp': timestamp,
               'Checksum': MD5(String(timestamp) + release + body)
             },

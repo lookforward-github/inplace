@@ -14,6 +14,8 @@ CANVAS_WIDTH = 200
 data = Data(CANVAS_WIDTH, CANVAS_HEIGHT)
 release = "1.0"
 
+activity = {}
+
 
 @app.route('/')
 def index():
@@ -30,7 +32,9 @@ def get_data():
 
 @app.route('/get-delta/<int:id>')
 def get_delta(id):
-    return json.dumps(data.history[id:])
+    now = time.time()
+    dudes = len([k for k, v in activity.items() if now - v < 60])
+    return json.dumps({'delta': data.history[id:], 'dudes': dudes})
 
 
 @app.route('/paint', methods=['POST'])
@@ -38,12 +42,13 @@ def paint():
     if not validate_request():
         return get_delta(request.json['last_id'])
 
+    activity[request.headers['UUID']] = time.time()
     update = data.change(request.json['data'], request.json['last_id'])
     return json.dumps(update)
 
 
 def validate_request():
-    if 'Timestamp' not in request.headers or 'Checksum' not in request.headers:
+    if 'Timestamp' not in request.headers or 'Checksum' not in request.headers or 'UUID' not in request.headers:
         return False
     timestamp = request.headers['Timestamp']
     if time.time() - int(timestamp) / 1000 > 5:
