@@ -34,6 +34,7 @@ def get_data():
 def get_delta(id):
     now = time.time()
     dudes = len([k for k, v in activity.items() if now - v < 60])
+    dudes = dudes if dudes > 0 else 1
     return json.dumps({'delta': data.history[id:], 'dudes': dudes})
 
 
