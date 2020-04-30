@@ -44,6 +44,15 @@ function loadDelta() {
     })
 }
 
+function returnCanvas() {
+    canvas.style.left = '300px';
+    canvas.style.top = '300px';
+    setCookie('canvasLeft', canvas.style.left);
+    setCookie('canvasTop', canvas.style.top);
+    scale = 4;
+    zoomCanvas(scale);
+}
+
 function redraw() {
     if (imageData) {
         let start = Date.now();
