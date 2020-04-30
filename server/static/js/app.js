@@ -100,8 +100,6 @@ hammertime.on('tap', function(e) {
     p.y = y;
     if (x >= 0 && x < width && y >= 0 && y < height) {
 
-        ctx.putImageData(new ImageData(new Uint8ClampedArray(p.rgba), 1, 1), p.x, p.y);
-
         let timestamp = Date.now();
         let body = JSON.stringify({data: p, last_id: last_id});
         fetch('/paint', {
@@ -117,7 +115,7 @@ hammertime.on('tap', function(e) {
         }).then(data => {
           return data.json()
         }).then(json => {
-          for (var update of json) {
+          for (var update of json.delta) {
             let data = update.data;
             let pixel = new ImageData(new Uint8ClampedArray(data.rgba), 1, 1);
             ctx.putImageData(pixel, data.x, data.y);

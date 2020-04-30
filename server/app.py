@@ -45,14 +45,19 @@ def paint():
 
     activity[request.headers['UUID']] = time.time()
     update = data.change(request.json['data'], request.json['last_id'])
-    return json.dumps(update)
+    return json.dumps({'delta': update})
 
 
 def validate_request():
     if 'Timestamp' not in request.headers or 'Checksum' not in request.headers or 'UUID' not in request.headers:
         return False
+
+    current_time = time.time()
+    if request.headers['UUID'] in activity and current_time - activity[request.headers['UUID']] < 1:
+        return False
+
     timestamp = request.headers['Timestamp']
-    if time.time() - int(timestamp) / 1000 > 5:
+    if current_time - int(timestamp) / 1000 > 5:
         return False
     checksum = md5(timestamp.encode('utf-8') + release.encode('utf-8') + request.data).hexdigest()
     if request.headers['Checksum'] != checksum:
