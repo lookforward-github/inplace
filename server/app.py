@@ -22,6 +22,11 @@ def index():
     return render_template('index.html')
 
 
+@app.route('/heatmap')
+def heatmap():
+    return render_template('heatmap.html')
+
+
 @app.route('/get-data')
 def get_data():
     response = make_response(send_file(io.BytesIO(data.array), mimetype='application/binary', cache_timeout=-1))
@@ -40,8 +45,7 @@ def get_delta(id):
 
 @app.route('/paint', methods=['POST'])
 def paint():
-    if not validate_request():
-        return get_delta(request.json['last_id'])
+    return get_delta(request.json['last_id'])
 
     activity[request.headers['UUID']] = time.time()
     update = data.change(request.json['data'], request.json['last_id'])

@@ -1,10 +1,18 @@
 let ctx = canvas.getContext("2d");
+let ctxhm = heatmapCanvas.getContext("2d");
 ctx.imageSmoothingEnabled = false;
-let imageData;
+let imageData, heatmapImageData;
+let heatmapData;
 let height = 200, width = 200;
 let scale = getCookie('scale', 4);
 let minScale = 1, maxScale = 14;
 let history;
+let field = new Array(width);
+
+for (var i = 0; i < field.length; i++) {
+    field[i] = new Array(height);
+    field[i].fill(0);
+}
 
 zoomCanvas(scale);
 
@@ -14,45 +22,55 @@ ctx.fillStyle = "white";
 ctx.fill();
 
 function loadData() {
-    let start = Date.now();
+    fetch('/get-data').then(data => {
+        return data.arrayBuffer()
+    }).then(data => {
+        data = new Uint8ClampedArray(data);
+        imageData = new ImageData(data, height, width);
+        redraw();
+    }).catch(reason => { console.error(reason) })
+
     fetch('/get-delta/0').then(data => {
         return data.json()
     }).then(json => {
+        let max = 0;
         history = json.delta;
-        historyRange.max = history.length;
+        for (var update of history) {
+            let data = update.data;
+            field[data.x][data.y] += 1;
+            max = field[data.x][data.y] > max ? field[data.x][data.y] : max;
+        }
+        max = Math.log(max);
+        heatmap = new Array();
+        for (var i = 0; i < field.length; i++) {
+            for (var j = 0; j < field[i].length; j++) {
+                let color = 255 * Math.log(field[j][i]) / max;
+                heatmap.push(color);
+                heatmap.push(0);
+                heatmap.push(255 - color);
+                heatmap.push(0);
+            }
+        }
+        heatmapImageData = new ImageData(new Uint8ClampedArray(heatmap), width, height);
+        redraw();
         painter.remove()
     }).catch(reason => { console.error(reason) })
 }
 
-let prevMilestone = 0;
-function historyChange(milestone) {
-    milestone = parseInt(milestone);
-
-    if (milestone > prevMilestone) { // forward
-        for (var update of history.slice(prevMilestone, milestone)) {
-            let data = update.data;
-            let pixel = new ImageData(new Uint8ClampedArray(data.rgba), 1, 1);
-            ctx.putImageData(pixel, data.x, data.y);
-        }
-    } else if (milestone < prevMilestone) { // backward
-        let historySlice = history.slice(0, prevMilestone - 1).reverse();
-        let milestoneSlice = history.slice(milestone, prevMilestone).reverse();
-        for (var update of milestoneSlice) {
-            let data = historySlice.find(el => el.data.x == update.data.x && el.data.y == update.data.y);
-            data = data !== undefined ? data.data : {x: update.data.x, y: update.data.y, rgba: [255, 255, 255, 255]};
-            let pixel = new ImageData(new Uint8ClampedArray(data.rgba), 1, 1);
-            ctx.putImageData(pixel, data.x, data.y);
-            historySlice.shift()
-        }
+function changeAlpha(alpha) {
+    for (var i = 1; i < parseInt(heatmap.length / 4); i++) {
+        heatmap[i * 4 - 1] = parseInt(alpha);
     }
-
-    prevMilestone = milestone;
+    heatmapImageData = new ImageData(new Uint8ClampedArray(heatmap), width, height);
+    redraw();
 }
 
 function redraw() {
     if (imageData) {
-        let start = Date.now();
         ctx.putImageData(imageData, 0, 0);
+    }
+    if (heatmapImageData) {
+        ctxhm.putImageData(heatmapImageData, 0, 0);
     }
 }
 
@@ -64,27 +82,9 @@ function zoomCanvas(value) {
     setCookie('scale', scale);
 
     canvas.style.transform = `scale(${scale})`;
+    heatmapCanvas.style.transform = `scale(${scale})`;
 
     redraw();
-}
-
-let playInterval = null;
-function play() {
-    if (playInterval) {
-        return;
-    }
-    playInterval = setInterval(() => {
-        if (historyRange.max == historyRange.value) {
-            pause();
-        }
-        historyChange(prevMilestone + 1);
-        historyRange.value = prevMilestone;
-    }, 1);
-}
-
-function pause() {
-    clearInterval(playInterval);
-    playInterval = null;
 }
 
 window.addEventListener('wheel', function(event) {
@@ -112,14 +112,19 @@ let canvasLeft, canvasTop;
 canvas.style.left = getCookie('canvasLeft', '0px');
 canvas.style.top = getCookie('canvasTop', '0px');
 
+heatmapCanvas.style.left = getCookie('canvasLeft', '0px');
+heatmapCanvas.style.top = getCookie('canvasTop', '0px');
+
 hammertime.on('panstart', function(e) {
     canvasLeft = parseInt(canvas.style.left || 0);
     canvasTop = parseInt(canvas.style.top || 0);
 });
 hammertime.on('panmove', function(e) {
-    if (e.target.id != "historyRange") {
+    if (e.target.id != "alphaRange") {
         canvas.style.left = (canvasLeft + e.deltaX) + 'px';
         canvas.style.top = (canvasTop + e.deltaY) + 'px';
+        heatmapCanvas.style.left = (canvasLeft + e.deltaX) + 'px';
+        heatmapCanvas.style.top = (canvasTop + e.deltaY) + 'px';
     }
 });
 hammertime.on('panend', function(e) {

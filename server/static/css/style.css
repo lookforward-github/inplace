@@ -11,7 +11,7 @@ html, body {
     width: 100%;
     text-align: center;
 }
-#canvas {
+canvas {
     position: absolute;
     left: 0;
     top: 120px;
@@ -19,6 +19,9 @@ html, body {
     transform: scale(1);
     image-rendering: pixelated;
     image-rendering: crisp-edges;
+}
+#heatmapCanvas {
+    image-rendering: unset!important;
 }
 .painter {
     background-color: rgba(255, 255, 255, 0.8);
