@@ -27,6 +27,11 @@ def heatmap():
     return render_template('heatmap.html')
 
 
+@app.route('/hi-res')
+def hires():
+    return render_template('hires.html')
+
+
 @app.route('/get-data')
 def get_data():
     response = make_response(send_file(io.BytesIO(data.array), mimetype='application/binary', cache_timeout=-1))
