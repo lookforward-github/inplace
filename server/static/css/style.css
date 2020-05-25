@@ -1,21 +1,35 @@
 html, body {
-   height: 100%;
-   width: 100%;
-   margin: 0;
-   padding: 0;
-   background-color: black;
-   overflow: hidden;
+    height: 100%;
+    width: 100%;
+    margin: 0;
+    padding: 0;
+    background-color: #777;
+    overflow: hidden;
+    font-family: monospace;
 }
-.canvas-wrapper {
+#app {
     height: 100%;
     width: 100%;
     text-align: center;
 }
-canvas {
+#app_loader {
+    height: 100%;
+    width: 100%;
+    position: absolute;
+    background-color: #000000;
+    opacity: 0.7;
+    z-index: 10;
+    color: white;
+    font-size: 26px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+#app_canvas {
     position: absolute;
     left: 0;
     top: 120px;
-    transform-origin: center;
+    transform-origin: 0 0;
     transform: scale(1);
     image-rendering: pixelated;
     image-rendering: crisp-edges;

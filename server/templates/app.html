@@ -1,0 +1,23 @@
+{% extends "layout.html" %}
+{% block body %}
+    <script type='text/javascript' src="/static/js/app.js?v3"></script>
+    <div id="app"></div>
+    <div id="painter" class="painter">
+        <label id="dudes">Loading...</label>
+        <br>
+        <label>Select color here</label>
+        <input id="painterInput" class="painter-input" type="color">
+        <label>and tap anywhere to paint!</label>
+        <hr>
+        <label>Use mouse or finger to move canvas</label>
+        <br>
+        <label>Scroll or pitch to zoom</label>
+        <span id="newTab" style="display: none">
+            <hr>
+            <a href="/" target="_blank"><button>Open in new tab</button></a>
+        </span>
+    </div>
+    <script>
+        app = new App(document.getElementById('app'));
+    </script>
+{% endblock %}

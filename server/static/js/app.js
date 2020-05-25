@@ -1,157 +1,86 @@
-let ctx = canvas.getContext("2d");
-ctx.imageSmoothingEnabled = false;
-let imageData;
-let height = 200, width = 200;
-let scale = getCookie('scale', 4);
-let minScale = 1, maxScale = 14;
 let p = {x: 0, y: 0, rgba: [0, 0, 0, 255]}
-let last_id = 0;
-let release = "";
 
-let uuid = getCookie('uuid', null);
-if (!uuid) {
-    uuid = createUUID();
-    setCookie('uuid', uuid);
-}
+function Loader($parent, isFrame) {
+    this.$node = document.createElement('div');
+    this.$node.id = 'app_loader';
+    $parent.appendChild(this.$node);
 
-zoomCanvas(scale);
+    this.$node.innerHTML = isFrame ? 'Кликни для игры' : 'Загрузка';
 
-function loadData() {
-    fetch('/get-data').then(data => {
-        last_id = parseInt(data.headers.get('X-Last-ID'));
-        release = data.headers.get('Release');
-        return data.arrayBuffer()
-    }).then(data => {
-        data = new Uint8ClampedArray(data);
-        imageData = new ImageData(data, height, width);
-        redraw();
-    }).catch(reason => { console.error(reason) })
-}
-
-function loadDelta() {
-    fetch(`/get-delta/${last_id}`).then(data => {
-        return data.json()
-    }).then(json => {
-      dudes.innerHTML = 'Dude counter: ' + json.dudes;
-
-      for (var update of json.delta) {
-        let data = update.data;
-        let pixel = new ImageData(new Uint8ClampedArray(data.rgba), 1, 1);
-        ctx.putImageData(pixel, data.x, data.y);
-        last_id = update.id;
-      }
-      imageData = ctx.getImageData(0, 0, width, height);
-    })
-}
-
-function returnCanvas() {
-    canvas.style.left = '300px';
-    canvas.style.top = '300px';
-    setCookie('canvasLeft', canvas.style.left);
-    setCookie('canvasTop', canvas.style.top);
-    scale = 4;
-    zoomCanvas(scale);
-}
-
-function redraw() {
-    if (imageData) {
-        let start = Date.now();
-        ctx.putImageData(imageData, 0, 0);
+    this.remove = () => {
+        this.$node.remove();
+        window.app.activate();
     }
+
+    this.$node.addEventListener('click', this.remove);
 }
 
-function zoomCanvas(value) {
-    value = value < minScale ? minScale : value;
-    value = value > maxScale ? maxScale : value;
-
-    scale = parseFloat(value);
-    setCookie('scale', scale);
-
-    canvas.style.transform = `scale(${scale})`;
-
-    redraw();
-}
-
-function changeColor(hex) {
-    p.rgba = hexToRgba(hex);
-}
-
-window.addEventListener('wheel', function(event) {
-    if (event.deltaY > 0) {
-        zoomCanvas(scale - 1);
-    } else if (event.deltaY < 0) {
-        zoomCanvas(scale + 1);
+function App($node) {
+    this.isFrame = window.self != window.top;
+    if (this.isFrame) {
+        newTab.style.display = 'block';
     }
-}, false);
 
-var hammertime = new Hammer(body);
-hammertime.get('pinch').set({ enable: true });
-hammertime.get('pan').set({ direction: Hammer.DIRECTION_ALL });
+    this.$node = $node;
+    this.loader = new Loader(this.$node, this.isFrame);
+    this.controls = new Controls(this.$node);
 
-hammertime.on('tap', function(e) {
-    if (e.target.id.startsWith('painter')) {
-        return
-    }
-    let rect = canvas.getBoundingClientRect();
-    let x = 0, y = 0;
-    x = Math.floor((event.clientX - rect.left) / scale);
-    y = Math.floor((event.clientY - rect.top) / scale);
-    p.x = x;
-    p.y = y;
-    if (x >= 0 && x < width && y >= 0 && y < height) {
+    this.DELTA_INTERVAL = 1000;
 
-        let timestamp = Date.now();
-        let body = JSON.stringify({data: p, last_id: last_id});
-        fetch('/paint', {
-            method: 'POST',
-            cache: 'no-cache',
-            headers: {
-              'Content-Type': 'application/json',
-              'UUID': uuid,
-              'Timestamp': timestamp,
-              'Checksum': MD5(String(timestamp) + release + body)
-            },
-            body: body
-        }).then(data => {
-          return data.json()
-        }).then(json => {
-          for (var update of json.delta) {
-            let data = update.data;
-            let pixel = new ImageData(new Uint8ClampedArray(data.rgba), 1, 1);
-            ctx.putImageData(pixel, data.x, data.y);
-            last_id = update.id;
-          }
-          imageData = ctx.getImageData(0, 0, width, height);
+    this.lastID = 0;
+    this.timeout = 0;
+    this.canvas = null;
+    this.deltaInterval = null;
+
+    this.init = () => {
+        API.getState(data => {
+            this.lastID = data.lastID;
+            this.timeout = data.timeout;
+            this.canvas = new Canvas(this.$node, data.canvasWidth, data.canvasHeight);
+            this.load();
         });
     }
-});
 
-let canvasScale = scale;
-hammertime.on('pinchstart', function(e) {
-    canvasScale = scale;
-});
-hammertime.on('pinchmove', function(e) {
-    zoomCanvas(canvasScale * e.scale);
-});
+    this.load = () => {
+        API.getData(data => {
+            this.canvas.redraw(data);
+            if (!this.isFrame) {
+                this.loader.remove();
+            }
+            if (this.deltaInterval == null) {
+                this.deltaInterval = setInterval(this.delta, this.DELTA_INTERVAL);
+            }
+        });
+    }
 
-let canvasLeft, canvasTop;
+    this.delta = () => {
+        API.getDelta(this.lastID, json => {
+            dudes.innerHTML = 'Online: ' + json.dudes;
 
-canvas.style.left = getCookie('canvasLeft', '300px');
-canvas.style.top = getCookie('canvasTop', '300px');
+            for (var update of json.delta) {
+                let data = update.data;
+                this.canvas.drawPixel(data.x, data.y, data.rgba);
+                this.lastID = update.id;
+            }
+        });
+    }
 
-hammertime.on('panstart', function(e) {
-    canvasLeft = parseInt(canvas.style.left || 0);
-    canvasTop = parseInt(canvas.style.top || 0);
-});
-hammertime.on('panmove', function(e) {
-    canvas.style.left = (canvasLeft + e.deltaX) + 'px';
-    canvas.style.top = (canvasTop + e.deltaY) + 'px';
-});
-hammertime.on('panend', function(e) {
-    setCookie('canvasLeft', canvas.style.left);
-    setCookie('canvasTop', canvas.style.top);
-});
+    this.paint = (x, y) => {
+        let p = { x: x, y: y, rgba: hexToRgba(painterInput.value) }
+        API.paint(p, this.lastID, res => {
+            for (var update of res.delta) {
+                let data = update.data;
+                this.canvas.drawPixel(data.x, data.y, data.rgba);
+                this.lastID = update.id;
+            }
+        });
+    }
 
-loadData();
+    this.activate = () => {
+        this.controls.active = true;
+    }
 
-setInterval(loadDelta, 1000);
+    this.init();
+}
+
+

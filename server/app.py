@@ -1,73 +1,100 @@
+from flask import Flask, render_template, send_file, request, make_response
+from hashlib import md5
+from data import Data
 import json
 import time
-from hashlib import md5
-
-from flask import Flask, render_template, send_file, request, make_response
+import uuid
 import io
-
-from data import Data
 
 app = Flask(__name__)
 
-CANVAS_HEIGHT = 200
-CANVAS_WIDTH = 200
+CANVAS_HEIGHT = 500
+CANVAS_WIDTH = 500
+PAINT_TIMEOUT = 1
 data = Data(CANVAS_WIDTH, CANVAS_HEIGHT)
-release = "1.1"
+release = "1.2"
 
 activity = {}
 
 
 @app.route('/')
-def index():
-    return render_template('index.html')
+def _app():
+    return render_template('app.html')
+
+
+@app.route('/rewind')
+def _rewind():
+    return render_template('rewind.html')
 
 
 @app.route('/heatmap')
-def heatmap():
+def _heatmap():
     return render_template('heatmap.html')
 
 
 @app.route('/hi-res')
-def hires():
+def _hires():
     return render_template('hires.html')
+
+
+@app.route('/get-state')
+def get_state():
+    id = uuid.uuid4().hex
+    activity[id] = time.time()
+
+    return json.dumps({
+        'lastID': len(data.history),
+        'timeout': PAINT_TIMEOUT,
+        'canvasHeight': CANVAS_HEIGHT,
+        'canvasWidth': CANVAS_WIDTH,
+        'release': release,
+        'id': id
+    })
 
 
 @app.route('/get-data')
 def get_data():
     response = make_response(send_file(io.BytesIO(data.array), mimetype='application/binary', cache_timeout=-1))
-    response.headers['X-Last-ID'] = len(data.history)
-    response.headers['Release'] = release
     return response
 
 
 @app.route('/get-delta/<int:id>')
 def get_delta(id):
-    now = time.time()
-    dudes = len([k for k, v in activity.items() if now - v < 60])
-    dudes = dudes if dudes > 0 else 1
-    return json.dumps({'delta': data.history[id:], 'dudes': dudes})
+    return prepare_response(data.history[id:])
 
 
 @app.route('/paint', methods=['POST'])
 def paint():
-    return get_delta(request.json['last_id'])
+    if not validate_request():
+        return get_delta(request.json['last_id'])
 
-    activity[request.headers['UUID']] = time.time()
+    activity[request.headers['Request-ID']] = time.time()
     update = data.change(request.json['data'], request.json['last_id'])
-    return json.dumps({'delta': update})
+    return prepare_response(update)
+
+
+def prepare_response(delta):
+    now = time.time()
+    dudes = len([k for k, v in activity.items() if now - v < 60])
+    dudes = dudes if dudes > 0 else 1
+    return json.dumps({'delta': delta, 'dudes': dudes})
 
 
 def validate_request():
-    if 'Timestamp' not in request.headers or 'Checksum' not in request.headers or 'UUID' not in request.headers:
+    if 'Timestamp' not in request.headers or 'Checksum' not in request.headers or 'Request-ID' not in request.headers:
+        return False
+
+    if request.headers['Request-ID'] not in activity:
         return False
 
     current_time = time.time()
-    if request.headers['UUID'] in activity and current_time - activity[request.headers['UUID']] < 1:
+    if current_time - activity[request.headers['Request-ID']] < PAINT_TIMEOUT:
         return False
 
     timestamp = request.headers['Timestamp']
     if current_time - int(timestamp) / 1000 > 5:
         return False
+
     checksum = md5(timestamp.encode('utf-8') + release.encode('utf-8') + request.data).hexdigest()
     if request.headers['Checksum'] != checksum:
         return False
@@ -85,11 +112,6 @@ def flush():
 def dump():
     data.dump()
     return 'ok'
-
-
-@app.route('/rewind')
-def rewind():
-    return render_template('rewind.html')
 
 
 if __name__ == '__main__':
