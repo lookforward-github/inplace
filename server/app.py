@@ -82,6 +82,12 @@ def prepare_response(delta):
 
 def validate_request():
     if 'Timestamp' not in request.headers or 'Checksum' not in request.headers or 'Request-ID' not in request.headers:
+        return
+
+    if 'x' not in request.json['data'] or 'y' not in request.json['data'] or 'rgba' not in request.json['data']:
+        return False
+
+    if len(request.json['data']['rgba']) != 4:
         return False
 
     if request.headers['Request-ID'] not in activity:
