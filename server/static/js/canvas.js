@@ -8,7 +8,7 @@ function Canvas($parent, width, height) {
     this.MIN_SCALE = 1;
     this.MAX_SCALE = 14;
 
-    this.scale = 2;
+    this.scale = 1;
     this.width = width;
     this.height = height;
     this.ctx = this.$node.getContext("2d");
