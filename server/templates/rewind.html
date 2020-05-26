@@ -1,26 +1,11 @@
-<!DOCTYPE html>
-<html>
-<head>
-    <title>/in/place</title>
-    <meta charset=utf-8>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-    <link rel="stylesheet" type="text/css" href="/static/css/style.css">
-    <link rel="shortcut icon" href="/static/img/icons/favicon.png" type="image/png"/>
-    <script src="https://kit.fontawesome.com/b572bccbd7.js" crossorigin="anonymous"></script>
-    <script type='text/javascript' src='/static/js/libs/ftscroller.js'></script>
-    <script type='text/javascript' src='/static/js/libs/hammer.min.js'></script>
-    <script type='text/javascript' src="/static/js/functions.js"></script>
-</head>
-<body id="body">
-    <div class="canvas-wrapper" id="canvasWrapper">
-        <canvas id="canvas" height="200" width="200"></canvas>
-    </div>
-    <div id="painter" class="painter" style="top: 50px" id="painter">
-        Loading...
-    </div>
-    <input type="range" class="rewind" id="historyRange" min="0" max="0" onInput="historyChange(this.value)">
-    <input type="button" class="play" value="play" id="play" onClick="play()">
-    <input type="button" class="pause" value="pause" id="pause" onClick="pause()">
-    <script type='text/javascript' src="/static/js/rewind.js"></script>
-</body>
-</html>
+{% extends "layout.html" %}
+{% block body %}
+    <script type='text/javascript' src="/static/js/rewind.js?v3"></script>
+    <div id="app"></div>
+    <input type="range" class="rewind" id="historyRange" min="0" max="0" onInput="app.historyChange(this.value)">
+    <input type="button" class="play" value="play" id="play" onClick="app.play()">
+    <input type="button" class="pause" value="pause" id="pause" onClick="app.pause()">
+    <script>
+        app = new App(document.getElementById('app'));
+    </script>
+{% endblock %}

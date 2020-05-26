@@ -1,130 +1,90 @@
-let ctx = canvas.getContext("2d");
-ctx.imageSmoothingEnabled = false;
-let imageData;
-let height = 200, width = 200;
-let scale = getCookie('scale', 4);
-let minScale = 1, maxScale = 14;
-let history;
+let p = {x: 0, y: 0, rgba: [0, 0, 0, 255]}
 
-zoomCanvas(scale);
+function Loader($parent) {
+    this.$node = document.createElement('div');
+    this.$node.id = 'app_loader';
+    $parent.appendChild(this.$node);
 
-ctx.beginPath();
-ctx.rect(0, 0, width, height);
-ctx.fillStyle = "white";
-ctx.fill();
+    this.$node.innerHTML = 'Загрузка';
 
-function loadData() {
-    let start = Date.now();
-    fetch('/get-delta/0').then(data => {
-        return data.json()
-    }).then(json => {
-        history = json.delta;
-        historyRange.max = history.length;
-        painter.remove()
-    }).catch(reason => { console.error(reason) })
+    this.remove = () => {
+        this.$node.remove();
+        window.app.activate();
+    }
 }
 
-let prevMilestone = 0;
-function historyChange(milestone) {
-    milestone = parseInt(milestone);
+function App($node) {
+    this.$node = $node;
+    this.loader = new Loader(this.$node);
+    this.controls = new Controls(this.$node);
 
-    if (milestone > prevMilestone) { // forward
-        for (var update of history.slice(prevMilestone, milestone)) {
-            let data = update.data;
-            let pixel = new ImageData(new Uint8ClampedArray(data.rgba), 1, 1);
-            ctx.putImageData(pixel, data.x, data.y);
+    this.history = null;
+    this.prevMilestone = 0;
+    this.lastID = 0;
+    this.timeout = 0;
+    this.canvas = null;
+
+    this.init = () => {
+        API.getState(data => {
+            this.lastID = data.lastID;
+            this.timeout = data.timeout;
+            this.canvas = new Canvas(this.$node, data.canvasWidth, data.canvasHeight);
+            this.load();
+        });
+    }
+
+    this.load = () => {
+        API.getDelta(0, data => {
+            this.history = data.delta;
+            historyRange.max = this.history.length;
+            this.loader.remove();
+        });
+    }
+
+    this.activate = () => {
+        this.controls.active = true;
+    }
+
+    this.historyChange = milestone => {
+        milestone = parseInt(milestone);
+
+        if (milestone > this.prevMilestone) { // forward
+            for (var update of this.history.slice(this.prevMilestone, milestone)) {
+                let data = update.data;
+                this.canvas.drawPixel(data.x, data.y, data.rgba);
+            }
+        } else if (milestone < this.prevMilestone) { // backward
+            let historySlice = this.history.slice(0, this.prevMilestone - 1).reverse();
+            let milestoneSlice = this.history.slice(milestone, this.prevMilestone).reverse();
+            for (var update of milestoneSlice) {
+                let data = historySlice.find(el => el.data.x == update.data.x && el.data.y == update.data.y);
+                data = data !== undefined ? data.data : {x: update.data.x, y: update.data.y, rgba: [255, 255, 255, 255]};
+                this.canvas.drawPixel(data.x, data.y, data.rgba);
+                historySlice.shift()
+            }
         }
-    } else if (milestone < prevMilestone) { // backward
-        let historySlice = history.slice(0, prevMilestone - 1).reverse();
-        let milestoneSlice = history.slice(milestone, prevMilestone).reverse();
-        for (var update of milestoneSlice) {
-            let data = historySlice.find(el => el.data.x == update.data.x && el.data.y == update.data.y);
-            data = data !== undefined ? data.data : {x: update.data.x, y: update.data.y, rgba: [255, 255, 255, 255]};
-            let pixel = new ImageData(new Uint8ClampedArray(data.rgba), 1, 1);
-            ctx.putImageData(pixel, data.x, data.y);
-            historySlice.shift()
+
+        this.prevMilestone = milestone;
+    }
+
+    this.playInterval = null;
+    this.play = () => {
+        if (this.playInterval) {
+            return;
         }
+        this.playInterval = setInterval(() => {
+            if (historyRange.max == historyRange.value) {
+                this.pause();
+            }
+            this.historyChange(this.prevMilestone + 1);
+            historyRange.value = this.prevMilestone;
+        }, 1);
     }
 
-    prevMilestone = milestone;
-}
-
-function redraw() {
-    if (imageData) {
-        let start = Date.now();
-        ctx.putImageData(imageData, 0, 0);
+    this.pause = () => {
+        clearInterval(this.playInterval);
+        this.playInterval = null;
     }
+
+    this.init();
 }
-
-function zoomCanvas(value) {
-    value = value < minScale ? minScale : value;
-    value = value > maxScale ? maxScale : value;
-
-    scale = parseFloat(value);
-    setCookie('scale', scale);
-
-    canvas.style.transform = `scale(${scale})`;
-
-    redraw();
-}
-
-let playInterval = null;
-function play() {
-    if (playInterval) {
-        return;
-    }
-    playInterval = setInterval(() => {
-        if (historyRange.max == historyRange.value) {
-            pause();
-        }
-        historyChange(prevMilestone + 1);
-        historyRange.value = prevMilestone;
-    }, 1);
-}
-
-function pause() {
-    clearInterval(playInterval);
-    playInterval = null;
-}
-
-window.addEventListener('wheel', function(event) {
-    if (event.deltaY > 0) {
-        zoomCanvas(scale - 1);
-    } else if (event.deltaY < 0) {
-        zoomCanvas(scale + 1);
-    }
-}, false);
-
-var hammertime = new Hammer(body);
-hammertime.get('pinch').set({ enable: true });
-hammertime.get('pan').set({ direction: Hammer.DIRECTION_ALL });
-
-let canvasScale = scale;
-hammertime.on('pinchstart', function(e) {
-    canvasScale = scale;
-});
-hammertime.on('pinchmove', function(e) {
-    zoomCanvas(canvasScale * e.scale);
-});
-
-let canvasLeft, canvasTop;
-
-canvas.style.left = getCookie('canvasLeft', '0px');
-canvas.style.top = getCookie('canvasTop', '0px');
-
-hammertime.on('panstart', function(e) {
-    canvasLeft = parseInt(canvas.style.left || 0);
-    canvasTop = parseInt(canvas.style.top || 0);
-});
-hammertime.on('panmove', function(e) {
-    if (e.target.id != "historyRange") {
-        canvas.style.left = (canvasLeft + e.deltaX) + 'px';
-        canvas.style.top = (canvasTop + e.deltaY) + 'px';
-    }
-});
-hammertime.on('panend', function(e) {
-    setCookie('canvasLeft', canvas.style.left);
-    setCookie('canvasTop', canvas.style.top);
-});
-
-loadData();

@@ -13,7 +13,12 @@ function Canvas($parent, width, height) {
     this.height = height;
     this.ctx = this.$node.getContext("2d");
     this.ctx.imageSmoothingEnabled = false;
+    this.ctx.beginPath();
+    this.ctx.rect(0, 0, this.width, this.height);
+    this.ctx.fillStyle = "white";
+    this.ctx.fill();
     this.imageData = this.ctx.getImageData(0, 0, this.width, this.height);
+
 
     this.$node.style.left = parseInt(($parent.clientWidth - this.width) / 2) + 'px';
     this.$node.style.top = parseInt(($parent.clientHeight - this.height) / 2) + 'px';
