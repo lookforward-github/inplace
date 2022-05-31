@@ -43,7 +43,6 @@ function Canvas($parent, width, height) {
         scale = parseFloat(scale).toFixed(2);
         scale = Math.max(this.MIN_SCALE, scale);
         scale = Math.min(this.MAX_SCALE, scale);
-        debug.innerHTML = scale;
 
         if (scale != this.scale) {
             let scaleDiff = Math.abs(scale - this.scale);
