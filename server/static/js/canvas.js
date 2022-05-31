@@ -6,7 +6,7 @@ function Canvas($parent, width, height) {
     $parent.appendChild(this.$node);
 
     this.MIN_SCALE = 1;
-    this.MAX_SCALE = 14;
+    this.MAX_SCALE = 10;
 
     this.scale = 1;
     this.width = width;
@@ -40,17 +40,19 @@ function Canvas($parent, width, height) {
         let left = parseInt(this.$node.style.left || 0);
         let top = parseInt(this.$node.style.top || 0);
 
-        scale = parseFloat(scale);
+        scale = parseFloat(scale).toFixed(2);
         scale = Math.max(this.MIN_SCALE, scale);
         scale = Math.min(this.MAX_SCALE, scale);
+        debug.innerHTML = scale;
 
         if (scale != this.scale) {
+            let scaleDiff = Math.abs(scale - this.scale);
             if (scale > this.scale) {
-                left -= coordinates.x;
-                top -= coordinates.y;
+                left -= Math.round(coordinates.x * scaleDiff);
+                top -= Math.round(coordinates.y * scaleDiff);
             } else {
-                left += coordinates.x;
-                top += coordinates.y;
+                left += Math.round(coordinates.x * scaleDiff);
+                top += Math.round(coordinates.y * scaleDiff);
             }
             this.$node.style.left = left + 'px';
             this.$node.style.top = top + 'px';

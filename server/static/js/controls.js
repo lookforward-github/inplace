@@ -11,11 +11,27 @@ function Controls($parent) {
     this.scaleCenter = {x: 0, y: 0};
 
     this.wheel = e => {
+        e.preventDefault();
+        console.log(e);
         if (this.active) {
-            if (e.deltaY > 0) {
-                window.app.canvas.zoomOut(1, e.clientX, e.clientY);
-            } else if (e.deltaY < 0) {
-                window.app.canvas.zoomIn(1, e.clientX, e.clientY);
+            let isTouchPad = false;
+            if (Math.abs(e.wheelDelta) < 100) {
+                isTouchPad = true;
+            }
+            let isCtrlKey = e.ctrlKey ? true : false;
+
+            if (!isCtrlKey && isTouchPad) {
+                this.canvasLeft = parseInt(window.app.canvas.$node.style.left || 0);
+                this.canvasTop = parseInt(window.app.canvas.$node.style.top || 0);
+                window.app.canvas.$node.style.left = (this.canvasLeft - e.deltaX) + 'px';
+                window.app.canvas.$node.style.top = (this.canvasTop - e.deltaY) + 'px';
+            } else {
+                let scale = isCtrlKey ? 0.2 : 1;
+                if (e.deltaY > 0) {
+                    window.app.canvas.zoomOut(scale, e.clientX, e.clientY);
+                } else if (e.deltaY < 0) {
+                    window.app.canvas.zoomIn(scale, e.clientX, e.clientY);
+                }
             }
         }
     }
@@ -32,14 +48,16 @@ function Controls($parent) {
 
 
     this.pinchstart = e => {
+        e.preventDefault();
         this.scaleCenter = e.center;
     }
     this.pinchmove = e => {
-        /*if (e.scale > 1) {
-            window.app.canvas.zoomIn(e.scale - 1, this.scaleCenter.x, this.scaleCenter.y);
+        e.preventDefault();
+        if (e.scale > 1) {
+            window.app.canvas.zoomIn(0.2, this.scaleCenter.x, this.scaleCenter.y);
         } else {
-            window.app.canvas.zoomOut(1 - e.scale, this.scaleCenter.x, this.scaleCenter.y);
-        }*/
+            window.app.canvas.zoomOut(0.2, this.scaleCenter.x, this.scaleCenter.y);
+        }
     }
 
     this.panstart = e => {
@@ -60,7 +78,10 @@ function Controls($parent) {
 
     this.init = () => {
         this.initHammertime();
-        window.addEventListener('wheel', this.wheel);
+        window.addEventListener('wheel', this.wheel, { passive: false });
+        window.addEventListener('gesturestart', this.wheel);
+        window.addEventListener('gesturechange', this.wheel);
+        window.addEventListener('gestureend', this.wheel);
         this.ht.on('tap', this.tap);
         this.ht.on('pinchstart', this.pinchstart);
         this.ht.on('pinchmove', this.pinchmove);
