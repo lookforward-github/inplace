@@ -32,7 +32,7 @@ html, body {
     transform-origin: 0 0;
     transform: scale(1);
     image-rendering: pixelated;
-    image-rendering: crisp-edges;
+    -ms-interpolation-mode: nearest-neighbor;
 }
 #heatmapCanvas {
     image-rendering: unset!important;

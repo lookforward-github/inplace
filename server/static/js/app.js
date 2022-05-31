@@ -5,7 +5,7 @@ function Loader($parent, isFrame) {
     this.$node.id = 'app_loader';
     $parent.appendChild(this.$node);
 
-    this.$node.innerHTML = isFrame ? 'Кликни для игры' : 'Загрузка';
+    this.$node.innerHTML = isFrame ? 'Click to play' : 'Loading';
 
     this.remove = () => {
         this.$node.remove();
@@ -82,5 +82,3 @@ function App($node) {
 
     this.init();
 }
-
-
