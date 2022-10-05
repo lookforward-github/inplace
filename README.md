@@ -1,3 +1,3 @@
 # inplace
 
-[test](https://example.com)
+[test](https://github.com/lookforward-github/inplace/tree/master#inplace)
